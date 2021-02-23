@@ -1,0 +1,16 @@
+Package: MyFunctions
+Title: Package of Useful Functions
+Version: 0.0.0.0001
+Authors@R: 
+    person(given = "Eliza",
+           family = "Harris",
+           role = c("aut", "cre"),
+           email = "eliza.harris@uibk.ac.at",
+           comment = c(ORCID = "0000-0002-7102-8305"))
+Description: Package containing my frequently used functions
+License: `use_mit_license()`, `use_gpl3_license()` or friends to
+    pick a license
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
