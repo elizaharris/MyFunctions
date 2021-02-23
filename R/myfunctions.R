@@ -1,14 +1,21 @@
 
 #' Function to convert time from a string to a Posix object
+#' 
 #' @param timechar A string or array of strings containing the time/date
 #' @param t_form The format of the time (see strptime for format details) - default t_form="%Y-%m-%d %H:%M:%S"
 #' @examples time.c("2019-01-01 01:01:01", t_form="%Y-%m-%d %H:%M:%S")
 #' @export
-# time conversion function
 time.c <- function(timechar,t_form="%Y-%m-%d %H:%M:%S"){
   as.POSIXct(strptime(timechar,t_form), tz = "CEST") } 
 
-# function to fill in times at a certain freq
+#' Function to fill in times at a certain freq
+#' 
+#' Useful to create a continuous time vec for interpolation
+#' @param startt Start datetime (Posix)
+#' @param endt End datetime (Posix)
+#' @param freq Spacing of times to fill in (must be in seconds!)
+#' @param updown If updown == "up" times are rounded up to the nearest second; otherwise down
+#' @export
 filltime = function(startt,endt,freq,updown){ 
   if (missing(updown)){updown="up"} # default values
   if (missing(freq)){freq=1}
@@ -19,17 +26,37 @@ filltime = function(startt,endt,freq,updown){
   for (n in 1:a){ x[n] = startt + (n-1)*freq }
   return(x) }
 
-# weighted mean and standard deviation
-weighted.m.sd = function(x,w){
-  if (length(which(!is.na(x)))>1){
-    b = weighted.mean(x,w,na.rm=TRUE)
+#' Function for weighted mean and standard deviation
+#' 
+#' @param x Vector of data
+#' @param w Vector of weights or standard deviations
+#' @param weightsaresd If TRUE (default) then the weights are assumed to be the standard deviation
+#' in the data, eg. a high value means a low weighting. If weightsaresd = FALSE the weights are
+#' used directly, eg. a high weight is a high weighting. If weightsaresd = FALSE the returned 
+#' standard deviation in the weighted mean may be incorrect.
+#' @return A vector of three numbers
+#' \itemize{
+#'   \item The weighted mean
+#'   \item The weighted standard deviation
+#'   \item The number of non-nan value-weight pairs
+#' }
+#' @export
+weighted.m.sd = function(x,w,weightsaresd = TRUE){
+  if (length(x)!=length(w)){stop("Weights and data are not the same length")}
+  tmp = which(!is.na(x) & !is.na(w) & is.finite(x) & is.finite(w))
+  x = x[tmp]; w = w[tmp]
+  if (length(x)>1){ 
+    if (weightsaresd){
+      b = weighted.mean(x,1/w)
+    } else {b = weighted.mean(x,w)}
     top = sum(w*((x-b)^2),na.rm=TRUE) # numerator of weighted sd
-    bottom = length(which(!is.na(w)))/(length(which(!is.na(w)))-1)*sum(w,na.rm=TRUE)
+    bottom = (length(w)-1)*sum(w)/length(w)
     wsd = sqrt(top/bottom)} 
-  if (length(which(!is.na(x)))==1){ b=x[which(!is.na(x))] 
-  wsd=w[which(!is.na(x))] }
-  if (length(which(!is.na(x)))==0){ b=NaN; wsd=NaN }
-  return(c(b,wsd,length(which(!is.na(x)))))
+  if (length(x)==1){ print("Only one non-NaN point; returning input data")
+    b=x; wsd=w }
+  if (length(x)==0){ print("No non-NaN points; returning NaNs")
+    b=NaN; wsd=NaN }
+  return(c(b,wsd,length(x)))
 }
 
 # find flattest portion of peak
